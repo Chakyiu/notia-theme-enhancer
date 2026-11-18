@@ -1,0 +1,34 @@
+/* Theme enhancer
+   This file overrides the active theme. Edit it here or in the plugin
+   settings. Delete a line to use the theme's own value again.
+
+   Icon pack: classic, simple, stack, bookmark, dot, heart, lock, tree, code, git
+   Icon colors are #hex. Leave one out to keep the theme's color.
+
+   .theme uses the color names from a theme.json "colors" block.
+   .highlight uses the names from a theme.json "highlight" block.
+   .folder sets the icon of one folder, by its path in the vault.
+*/
+
+.icons {
+  pack: classic;
+}
+
+.theme {
+  /* background: #1a1b26; */
+  /* foreground: #c0caf5; */
+  /* primary.background: #7aa2f7; */
+  /* sidebar.background: #16161e; */
+  /* accent.background: #292e42; */
+}
+
+.highlight {
+  /* editor.background: #1a1b26; */
+  /* syntax.title.color: #e0af68; */
+  /* syntax.link_text.color: #7aa2f7; */
+}
+
+/* .folder[path="Ideas"] {
+  icon: folder-heart;
+  color: #f7768e;
+} */

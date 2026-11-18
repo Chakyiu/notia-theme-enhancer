@@ -1,0 +1,8 @@
+{
+  "id": "theme-enhancer",
+  "name": "Theme enhancer",
+  "version": "0.1.0",
+  "author": "Notia",
+  "description": "Folder icon packs, icon colors, and a CSS file that overrides the active theme.",
+  "main": "main.js"
+}
