@@ -2,7 +2,7 @@
 
 A Notia community plugin. While it is on, the file list shows folder and file icons. While it is off, those icons are absent. It also recolors the icons and overrides the colors of whichever theme is active.
 
-The overrides live in `theme.css` in this folder. The settings page edits that same file. Saving it in any text editor applies the change. Delete a line to use the theme's own color again. Turning the plugin off removes every override.
+The overrides live in `theme.css` in this folder. The settings page edits that same file: icon colors, theme colors, highlight colors, and a rule per folder. Each group opens on its own, and the raw CSS editor stays closed until you need a line the form does not show. Saving the file in any text editor applies the change. Delete a line, or clear its field, to use the theme's own color again. Turning the plugin off removes every override.
 
 ```css
 .icons {

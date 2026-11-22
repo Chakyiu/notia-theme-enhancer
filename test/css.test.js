@@ -1,6 +1,18 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { appearanceFrom, parseCss, setProperty } from "../lib/css.js";
+import {
+  appearanceFrom,
+  colorEdit,
+  DEFAULT_CSS,
+  folderPathValue,
+  folderSelector,
+  isHighlightColorName,
+  isThemeColorName,
+  parseCss,
+  removeBlock,
+  renameSelector,
+  setProperty,
+} from "../lib/css.js";
 
 test("comments and empty colors leave the theme alone", () => {
   const parsed = parseCss(`
@@ -76,4 +88,85 @@ test("appearanceFrom sends highlight keys with a prefix", () => {
   assert.deepEqual(appearance.icons.folders, [
     { path: "Ideas", icon: "folder-lock", open: "", color: "#ff00aa" },
   ]);
+});
+
+test("theme, highlight, and folder edits keep the rest of the file", () => {
+  let css = setProperty(DEFAULT_CSS, ".theme", "background", "#010203");
+  css = setProperty(css, ".highlight", "syntax.title.color", "#445566");
+  css = setProperty(css, folderSelector("Notes/Ideas"), "icon", "folder-heart");
+  css = setProperty(css, folderSelector("Notes/Ideas"), "color", "#f7768e");
+  const parsed = parseCss(css);
+  assert.equal(parsed.theme.background, "#010203");
+  assert.equal(parsed.highlight["syntax.title.color"], "#445566");
+  assert.deepEqual(parsed.folders.at(-1), {
+    path: "Notes/Ideas",
+    icon: "folder-heart",
+    open: "",
+    color: "#f7768e",
+  });
+  assert.match(css, /Icon pack: classic/);
+  assert.match(css, /\/\* background: #1a1b26; \*\//);
+  assert.match(css, /\/\* \.folder\[path="Ideas"\]/);
+  const cleared = setProperty(css, ".theme", "background", "");
+  assert.equal(parseCss(cleared).theme.background, undefined);
+  assert.match(cleared, /syntax\.title\.color: #445566;/);
+  assert.match(cleared, /\/\* \.folder\[path="Ideas"\]/);
+});
+
+test("removeBlock and renameSelector leave unknown css untouched", () => {
+  const css = [
+    ".icons { pack: heart; }",
+    '.folder[path="Ideas"] {',
+    "  icon: folder-heart;",
+    "  color: #f7768e;",
+    "  mood: calm;",
+    "}",
+    ".extra { foo: bar; }",
+    '/* .folder[path="Ideas"] { icon: no; } */',
+  ].join("\n");
+  const colored = setProperty(css, folderSelector("Ideas"), "color", "#112233");
+  assert.match(colored, /mood: calm;/);
+  assert.match(colored, /color: #112233;/);
+  assert.match(colored, /\.extra \{ foo: bar; \}/);
+  const renamed = renameSelector(colored, folderSelector("Ideas"), folderSelector("Notes"));
+  assert.match(renamed, /^\.folder\[path="Notes"\] \{$/m);
+  assert.doesNotMatch(renamed, /^\.folder\[path="Ideas"\]/m);
+  assert.match(renamed, /mood: calm;/);
+  assert.match(renamed, /\/\* \.folder\[path="Ideas"\] \{ icon: no; \} \*\//);
+  const removed = removeBlock(renamed, folderSelector("Notes"));
+  assert.doesNotMatch(removed, /mood: calm/);
+  assert.match(removed, /\.icons \{ pack: heart; \}/);
+  assert.match(removed, /\.extra \{ foo: bar; \}/);
+  assert.match(removed, /\/\* \.folder\[path="Ideas"\] \{ icon: no; \} \*\//);
+  assert.equal(parseCss(removed).folders.length, 0);
+  const inline = removeBlock(
+    `.icons { pack: classic; }\n.folder[path="A"] { icon: folder; }\n.extra { a: b; }\n`,
+    folderSelector("A"),
+  );
+  assert.match(inline, /\.icons \{ pack: classic; \}/);
+  assert.match(inline, /\.extra \{ a: b; \}/);
+  assert.doesNotMatch(inline, /path="A"/);
+});
+
+test("a folder path with a double quote round-trips", () => {
+  const path = `Say "hi"`;
+  assert.equal(folderPathValue(path), path);
+  assert.equal(folderSelector(path), `.folder[path='Say "hi"']`);
+  assert.equal(folderSelector(`both "and '`), "");
+  const css = setProperty("", folderSelector(path), "icon", "folder-heart");
+  assert.equal(parseCss(css).folders[0].path, path);
+});
+
+test("color fields know a finished value from a partial one", () => {
+  assert.equal(colorEdit(""), "clear");
+  assert.equal(colorEdit("none"), "clear");
+  assert.equal(colorEdit("#abc"), "set");
+  assert.equal(colorEdit("#AABBCC"), "set");
+  assert.equal(colorEdit("#ab"), "draft");
+  assert.equal(colorEdit("yellow"), "draft");
+  assert.equal(isThemeColorName("primary.background"), true);
+  assert.equal(isThemeColorName("folder"), false);
+  assert.equal(isThemeColorName("highlight.foo"), false);
+  assert.equal(isHighlightColorName("syntax.title.color"), true);
+  assert.equal(isHighlightColorName("highlight.syntax.title.color"), false);
 });
